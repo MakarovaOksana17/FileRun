@@ -17,7 +17,7 @@ class Program
         
         stopWatch.Start();
 
-        FileSpace.readSpaceInFile(exePath, "*.txt");
+        FileSpaceSearcher.ReadSpaceInFile(exePath, "*.txt");
 
         stopWatch.Stop();
 
@@ -30,59 +30,37 @@ class Program
 
     
 }
-public static class FileSpace
+public static class FileSpaceSearcher
 {    
-    static int counter = 0;
-    public static void readSpaceInFile(string path, string extention)
+    public static void ReadSpaceInFile(string path, string extention)
     {
         try
         {
             List<Task> tasks = new List<Task>();
             foreach (var file in Directory.EnumerateFiles(path, extention))
             {
-                var readLines = new Task(() =>
+               
+                var readLines =  Task.Factory.StartNew(() =>
                 {
-
                     using (var reader = new StreamReader(file, detectEncodingFromByteOrderMarks: true))
-                    {
-
+                    {                        
                         while (reader.Read() > -1)
                         {
-
-                            counter = 0;
-                            Action<string> action = new Action<string>(countSpace);
-                            Array.ForEach(reader.ReadLine().Split(' '), action);
+                            Console.WriteLine($@"Task Id: {Task.CurrentId}  
+                                                File: {file.Replace(path, "")} contains {reader.ReadToEnd().Count(x => x == ' ').ToString()} spaces.");                           
+                            Console.WriteLine($"Task {Task.CurrentId} is Completed: {Task.CompletedTask.IsCompleted}");
                         }
-                        Console.WriteLine(counter);
-
-
-                    }
+                        
+                    } 
                 });
 
                 tasks.Add(readLines);
             }
-
-            taskRun(tasks);
-
+            Task.WaitAll(tasks.ToArray());            
         }
         catch (Exception e)
         {
             Console.WriteLine("Exception: " + e.Message);
         }
-    }
-    private static void countSpace(string value)
-    {
-        counter = counter + 1;
-    }
-    private static void taskRun(List<Task> tasks)
-    {
-        foreach (var task in tasks)
-        {
-            task.Start();
-            Console.WriteLine($"task Id: {task.Id}");
-            Console.WriteLine($"task is Completed: {task.IsCompleted}");
-            task.Wait();
-            Console.WriteLine($"task Status: {task.Status}");
-        }
-    }
+    }     
 }
